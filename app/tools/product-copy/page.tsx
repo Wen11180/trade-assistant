@@ -13,6 +13,34 @@ interface HistoryRecord {
 
 const HISTORY_KEY = 'product_copy_history'
 const MAX_HISTORY = 10
+const USAGE_KEY = 'product_copy_usage'
+const MAX_DAILY_USAGE = 5
+
+// 获取今日使用次数
+const getTodayUsage = (): { count: number; date: string } => {
+  try {
+    const saved = localStorage.getItem(USAGE_KEY)
+    if (saved) {
+      const data = JSON.parse(saved)
+      const today = new Date().toISOString().split('T')[0]
+      if (data.date === today) {
+        return data
+      }
+    }
+  } catch {
+    // 忽略错误
+  }
+  return { count: 0, date: new Date().toISOString().split('T')[0] }
+}
+
+// 增加使用次数
+const incrementUsage = (): number => {
+  const today = new Date().toISOString().split('T')[0]
+  const usage = getTodayUsage()
+  const newCount = usage.date === today ? usage.count + 1 : 1
+  localStorage.setItem(USAGE_KEY, JSON.stringify({ count: newCount, date: today }))
+  return newCount
+}
 
 export default function ProductCopyPage() {
   const [formData, setFormData] = useState<ProductFormData>({
@@ -40,14 +68,17 @@ export default function ProductCopyPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [history, setHistory] = useState<HistoryRecord[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [dailyUsage, setDailyUsage] = useState(0)
 
-  // 加载历史记录
+  // 加载历史记录和使用次数
   useEffect(() => {
     try {
       const saved = localStorage.getItem(HISTORY_KEY)
       if (saved) {
         setHistory(JSON.parse(saved))
       }
+      const usage = getTodayUsage()
+      setDailyUsage(usage.count)
     } catch {
       // 忽略解析错误
     }
@@ -146,6 +177,14 @@ export default function ProductCopyPage() {
 
   const handleSubmit = async (e: React.FormEvent, style?: string) => {
     e.preventDefault()
+
+    // 检查每日使用次数
+    const usage = getTodayUsage()
+    if (usage.count >= MAX_DAILY_USAGE) {
+      setError('今日免费次数已用完，请明天再试或联系获取更多次数')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
     setGeneratedContent(null)
@@ -155,10 +194,15 @@ export default function ProductCopyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, style }),
       })
-      if (!response.ok) throw new Error('生成失败')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || '生成失败')
+      }
       const data = await response.json()
       setGeneratedContent(data)
       saveToHistory(formData, data)
+      const newCount = incrementUsage()
+      setDailyUsage(newCount)
     } catch (err) {
       setError(err instanceof Error ? err.message : '生成失败，请稍后重试')
     } finally {
@@ -405,6 +449,18 @@ ${platform.notices.map((n, i) => `${i + 1}. ${n}`).join('\n')}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">商品文案生成</h1>
           <p className="text-lg text-gray-600">输入产品信息，AI 自动生成专业外贸英文文案</p>
+          <div className="mt-3 inline-flex items-center px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200">
+            <svg className="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-gray-600">
+              今日剩余次数：
+              <span className={`font-semibold ${MAX_DAILY_USAGE - dailyUsage > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {MAX_DAILY_USAGE - dailyUsage}
+              </span>
+              /{MAX_DAILY_USAGE}
+            </span>
+          </div>
         </div>
 
         {/* 使用提示 */}

@@ -17,6 +17,8 @@ interface ProductFormData {
   targetPlatform?: string
 }
 
+const MAX_INPUT_LENGTH = 2000
+
 export async function POST(request: NextRequest) {
   try {
     const body: ProductFormData = await request.json()
@@ -28,10 +30,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 检查输入长度
+    const totalInput = [
+      body.productName, body.material, body.usage, body.targetMarket,
+      body.advantages, body.specifications, body.capacity, body.customLogo,
+      body.packaging, body.moq, body.leadTime, body.certifications
+    ].filter(Boolean).join('')
+
+    if (totalInput.length > MAX_INPUT_LENGTH) {
+      return NextResponse.json(
+        { error: `输入内容过长，请控制在 ${MAX_INPUT_LENGTH} 字符以内` },
+        { status: 400 }
+      )
+    }
+
     const apiKey = process.env.DEEPSEEK_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API 密钥未配置' },
+        { error: 'API 密钥未配置，请联系管理员' },
         { status: 500 }
       )
     }
