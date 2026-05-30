@@ -1,0 +1,60 @@
+我要做一个 AI 外贸助手 MVP，请先做最小可运行版本。
+
+技术栈：
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- deepseek API
+
+暂时不要做：
+- 登录
+- 数据库
+- 支付
+- 用户权限
+- 后台管理
+
+只做：
+1. 首页 `/`
+2. 商品文案生成页 `/tools/product-copy`
+3. API 路由 `/api/generate`
+4. deepseek 调用
+5. `.env.example`
+6. README.md
+
+商品文案生成页表单字段：
+- 产品中文名称
+- 产品材质
+- 产品用途
+- 目标市场
+- 产品优势
+- 语气风格
+
+点击生成后输出：
+{
+  "title": "英文商品标题",
+  "bullet_points": ["卖点1", "卖点2", "卖点3", "卖点4", "卖点5"],
+  "description": "英文产品详情页",
+  "seo_keywords": ["keyword1", "keyword2", "keyword3"],
+  "platform_suggestion": "平台建议"
+}
+
+UI 要求：
+- SaaS 风格
+- 简洁专业
+- 移动端适配
+- 有 loading 状态
+- 有错误提示
+- 可以一键复制结果
+
+AI Prompt：
+你是一个专业外贸 B2B 英文文案专家，擅长为 Alibaba.com、Made-in-China、Global Sources、Amazon 和 Shopify 生成高转化英文商品文案。
+请根据用户输入的中文产品信息，生成专业、自然、适合外贸场景的英文商品标题、五点卖点、详情页和 SEO 关键词。
+要求英文自然、不夸大、不虚假承诺、适合 B2B 采购商阅读。
+只输出 JSON，不要输出 Markdown。
+
+请一步一步完成，并在最后运行：
+npm install
+npm run lint
+npm run build
+
+如果有任何错误，请直接修复，直到项目可以正常运行。
